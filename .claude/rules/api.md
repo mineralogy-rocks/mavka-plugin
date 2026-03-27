@@ -68,10 +68,10 @@ Tasks are containers that group entries. Title is embedded for semantic search.
 curl -s "$PALANTIR_API_URL/v1/tasks" \
   -H "Authorization: Bearer $PALANTIR_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"title": "TITLE", "project": "PROJECT", "status": "planning"}'
+  -d '{"title": "TITLE", "project": "PROJECT", "status": "planning", "due_date": "YYYY-MM-DD"}'
 ```
 
-The server auto-embeds the title for semantic search.
+Optional fields: `due_date` (ISO date, nullable). The server auto-embeds the title for semantic search.
 
 **Search (semantic):**
 ```bash
@@ -81,9 +81,9 @@ curl -s "$PALANTIR_API_URL/v1/tasks/search" \
   -d '{"query": "TEXT", "project": "PROJECT", "limit": 5}'
 ```
 
-Optional body fields: `status`. Returns tasks with `score` and `entry_count`.
+Optional body fields: `status`, `due_date_lte`, `due_date_gte` (ISO dates for range filtering). Returns tasks with `score`, `entry_count`, and `due_date`.
 
-**List:** `GET /v1/tasks?project=PROJECT&status=STATUS`
+**List:** `GET /v1/tasks?project=PROJECT&status=STATUS&due_date_lte=DATE&due_date_gte=DATE`
 
 **Get (with linked entries):** `GET /v1/tasks/{id}`
 
@@ -95,7 +95,7 @@ curl -s "$PALANTIR_API_URL/v1/tasks/{id}" -X PATCH \
   -d '{"status": "STATUS"}'
 ```
 
-Updatable fields: `status`, `title`. If title changes, embedding is regenerated.
+Updatable fields: `status`, `title`, `due_date`. If title changes, embedding is regenerated. Send `"due_date": null` to clear.
 
 **Archive (soft-delete):** `DELETE /v1/tasks/{id}` — sets status to `archived`, does not remove the record.
 

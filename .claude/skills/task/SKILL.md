@@ -26,9 +26,22 @@ If `$ARGUMENTS` looks like a file path (starts with `/` or `~`, or ends in `.md`
 
 If `$ARGUMENTS` is empty, ask the user what they want to do.
 
-### Step 1 — Classify Intent
+### Step 1 — Classify Intent & Extract Due Date
 
-Analyze the text and classify into one of three intents:
+Analyze the text and classify into one of three intents.
+
+**Due Date Extraction:** Also check if the text contains any date-like expressions — explicit dates ("March 30", "2026-04-15"), relative dates ("next Friday", "by end of week", "in 3 days", "next Monday"), or deadline keywords ("due", "by", "deadline", "before"). If found, compute the ISO date (`YYYY-MM-DD`) relative to today's date.
+
+Date interpretation rules:
+- "next week" → next Monday
+- "by Friday" → the coming Friday (or next Friday if today is already past Friday)
+- "in N days" → today + N days
+- "end of month" → last day of the current month
+- "March 30" → March 30 of the current year (or next year if that date has passed)
+
+Always output dates in `YYYY-MM-DD` format. Carry the extracted `due_date` into Step 3.
+
+Classify into one of three intents:
 
 **status-update** — Text references a task (by ID like `#5` or by topic/title fragment like "Provision Explorer") combined with a status keyword:
 - done / complete / finish → `done`
@@ -79,8 +92,10 @@ Exclude `done` and `archived` tasks from consideration by default (unless the us
 curl -s "$PALANTIR_API_URL/v1/tasks" \
   -H "Authorization: Bearer $PALANTIR_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"title": "TITLE", "project": "'$PALANTIR_PROJECT_NAME'", "status": "planning"}'
+  -d '{"title": "TITLE", "project": "'$PALANTIR_PROJECT_NAME'", "status": "planning", "due_date": "YYYY-MM-DD"}'
 ```
+
+Include `due_date` only if a date was extracted in Step 1. Omit the field entirely if no date is mentioned.
 
 3. If the text contains substantive information worth persisting (decisions, findings, context — not just the task title restated), atomize it into entries linked to the new task. Follow the atomization rules from `${CLAUDE_PLUGIN_ROOT}/.claude/rules/atomize.md`:
    - Each entry covers one topic
@@ -105,6 +120,8 @@ curl -s "$PALANTIR_API_URL/v1/tasks/TASK_ID" -X PATCH \
   -d '{"status": "NEW_STATUS"}'
 ```
 
+If the user mentions a deadline alongside the status change, include `"due_date": "YYYY-MM-DD"` in the PATCH payload. To clear a due date, send `"due_date": null`.
+
 #### For add-context:
 
 Atomize the new information into entries linked to the task via `task_id`, following the same atomization rules as new-task above.
@@ -112,9 +129,11 @@ Atomize the new information into entries linked to the task via `task_id`, follo
 ### Step 4 — Summary
 
 Always end with a clear summary:
-- **new-task**: "Created task #ID: 'TITLE' [planning]" + count of entries created
-- **status-update**: "Task #ID 'TITLE': STATUS_OLD → STATUS_NEW"
+- **new-task**: "Created task #ID: 'TITLE' [planning]" + due date if set + count of entries created
+- **status-update**: "Task #ID 'TITLE': STATUS_OLD → STATUS_NEW" + due date if changed
 - **add-context**: "Added N entries to task #ID 'TITLE'"
+
+When a due date is present, append `(due: YYYY-MM-DD)` to the summary line.
 
 ## Notes
 

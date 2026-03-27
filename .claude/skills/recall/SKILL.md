@@ -44,6 +44,8 @@ curl -s "$PALANTIR_API_URL/v1/tasks/search" \
   -d '{"query": "SEARCH_QUERY", "project": "'$PALANTIR_PROJECT_NAME'", "limit": 3}'
 ```
 
+**Date-aware filtering:** If the user's query mentions a timeframe ("due this week", "overdue", "tasks due before April", "what's coming up"), add `due_date_lte` and/or `due_date_gte` to the search payload (format: `YYYY-MM-DD`). For "overdue", use `"due_date_lte": "TODAY"` where TODAY is the current date. For "due this week", set `due_date_gte` to Monday and `due_date_lte` to Sunday of the current week. You can also use `GET /v1/tasks?due_date_lte=DATE&due_date_gte=DATE&project=PROJECT` for date-only queries where semantic search isn't needed.
+
 Additionally, for entry results from Step 1 that have a non-null `task_id`, fetch those tasks to show the connection:
 
 ```bash
@@ -86,6 +88,7 @@ Format the output following the example in `examples/recall-output.md` (relative
 For each task:
 - Status badge: `[planning]`, `[wip]`, `[blocked]`, `[review]`, `[done]`
 - **Task title** (bold)
+- Due date if set: `Due: YYYY-MM-DD`. If the due date is in the past and status is not `done` or `archived`, append `(overdue)`
 - Entry count (e.g., "3 entries")
 - Created date
 - If the task was found via an entry's `task_id`, note: "↳ linked from entry #ID"
