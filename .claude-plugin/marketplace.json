@@ -1,0 +1,25 @@
+{
+  "name": "mineralogy-rocks",
+  "owner": {
+    "name": "mineralogy.rocks",
+    "email": "admin@mineralogy.rocks"
+  },
+  "metadata": {
+    "description": "mineralogy.rocks plugins for Claude Code",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "palantir",
+      "source": "./",
+      "description": "Persistent knowledge system — stores decisions, findings, errors, and patterns with semantic search across sessions",
+      "version": "1.0.0",
+      "author": {
+        "name": "mineralogy.rocks",
+        "url": "https://github.com/mineralogy-rocks"
+      },
+      "license": "MIT",
+      "keywords": ["memory", "knowledge-base", "semantic-search", "atomization"]
+    }
+  ]
+}
