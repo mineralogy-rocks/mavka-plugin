@@ -2,7 +2,7 @@
 description: Create, update, or add context to tasks in Palantir. Accepts a text description or file path. Auto-detects whether to create a new task, update status, or enrich an existing task with entries.
 argument_hint: "<text or file path>"
 model: sonnet
-allowed-tools: Bash(curl *), Bash(echo *), Bash(jq *), Read, Grep
+allowed-tools: Bash(curl *$PALANTIR_API_URL*), Bash(echo *), Bash(jq *), Read, Grep
 context: fork
 ---
 

@@ -2,7 +2,7 @@
 description: Search Palantir for past decisions, findings, errors, patterns, and notes related to a topic. Use this whenever the user asks about previous work, past context, or how something was handled before.
 model: sonnet
 context: fork
-allowed-tools: Bash(curl *), Bash(echo *), Bash(jq *), Read
+allowed-tools: Bash(curl *$PALANTIR_API_URL*), Bash(echo *), Bash(jq *), Read
 ---
 
 # /recall

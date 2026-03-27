@@ -20,6 +20,12 @@ docker-compose up -d
 claude plugin install github:mineralogy-rocks/palantir-plugin
 ```
 
+For local development/testing without installing:
+
+```bash
+claude --plugin-dir /path/to/palantir-plugin
+```
+
 ## Configuration
 
 Add the following env vars to your project's `.claude/settings.local.json`:
