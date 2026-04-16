@@ -1,6 +1,0 @@
-{
-  "hookSpecificOutput": {
-    "hookEventName": "PostToolUse",
-    "additionalContext": "MANDATORY: Before starting implementation, save the approved plan to Palantir. Invoke the palantir skill and follow the Plan Protocol (references/plan-protocol.md). All atomized entries must use kind: machine-plan. Do NOT skip this step."
-  }
-}

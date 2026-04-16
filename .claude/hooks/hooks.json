@@ -6,7 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cat \"${CLAUDE_PLUGIN_ROOT}/.claude/hooks/palantir-plan-reminder.json\""
+            "command": "echo 'MANDATORY: Spawn a background Agent (model: sonnet) to save the approved plan to Palantir. The agent must invoke the palantir skill to save the plan. Pass the plan file path from the ExitPlanMode result. Use run_in_background: true so you can start implementing immediately. Do NOT save the plan yourself — delegate to the background agent.' >&2 && exit 2",
+            "asyncRewake": true
           }
         ]
       }

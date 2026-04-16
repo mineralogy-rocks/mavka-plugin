@@ -17,11 +17,27 @@ docker-compose up -d
 
 ## Installation
 
+### From the marketplace
+
+First, add the marketplace (one-time setup):
+
+```bash
+claude marketplace add github:mineralogy-rocks/palantir-plugin
+```
+
+Then install the plugin:
+
+```bash
+claude plugin install palantir@mineralogy-rocks
+```
+
+### From GitHub directly
+
 ```bash
 claude plugin install github:mineralogy-rocks/palantir-plugin
 ```
 
-For local development/testing without installing:
+### Local (for development or testing)
 
 ```bash
 claude --plugin-dir /path/to/palantir-plugin
@@ -72,8 +88,9 @@ The plugin acts as a middleware layer between the AI agent and Palantir. It enfo
 individually-searchable entries — before anything is written. It also ensures
 duplicate checks, tag reuse, correct kind classification, and standalone BLUF summaries.
 
-When a plan is approved in `/plan` mode, a hook automatically injects a reminder
-for the agent to save the plan to Palantir before starting implementation.
+When a plan is approved in `/plan` mode, a hook automatically spawns a **sonnet agent**
+that saves the plan to Palantir — the main agent can start implementing immediately
+without waiting.
 
 ## Skill
 
@@ -94,7 +111,7 @@ The skill routes by intent:
 
 | Event | Matcher | What it does |
 |-------|---------|-------------|
-| **PostToolUse** | `ExitPlanMode` | Reminds the agent to save the approved plan to Palantir |
+| **PostToolUse** | `ExitPlanMode` | Async hook — wakes the agent to spawn a background sonnet agent that saves the plan to Palantir |
 
 ## Plugin structure
 
@@ -111,8 +128,7 @@ The skill routes by intent:
       search-protocol.md               # Search and recall past knowledge
       task-protocol.md                 # Task lifecycle management
   hooks/
-    hooks.json                         # Hook definitions (PostToolUse on ExitPlanMode)
-    palantir-plan-reminder.json        # additionalContext payload for plan persistence
+    hooks.json                         # Async hook — triggers background plan saving on ExitPlanMode
   rules/
     atomize.md                         # Shared atomization rules
     api.md                             # MCP tool reference
@@ -138,8 +154,8 @@ merged via Reciprocal Rank Fusion.
 
 ## Manual hook setup (without the plugin)
 
-If you want plan persistence without installing the full plugin, you can set it up
-manually. Add to your project's `.claude/settings.local.json`:
+If you want automatic plan saving without installing the full plugin, you can set
+it up manually. Add to your project's `.claude/settings.local.json`:
 
 ```json
 {
@@ -150,7 +166,8 @@ manually. Add to your project's `.claude/settings.local.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "cat \"$CLAUDE_PROJECT_DIR/.claude/hooks/palantir-plan-reminder.json\""
+            "command": "echo 'MANDATORY: Spawn a background Agent (model: sonnet) to save the approved plan to Palantir. The agent must: 1) Read the plan-protocol.md from the palantir plugin references, 2) Read the plan file from the path in the ExitPlanMode result, 3) Follow the Plan Protocol to atomize and save via save_approved_plan MCP tool. Use run_in_background: true so you can start implementing immediately. Do NOT save the plan yourself — delegate to the background agent.' >&2 && exit 2",
+            "asyncRewake": true
           }
         ]
       }
@@ -159,28 +176,17 @@ manually. Add to your project's `.claude/settings.local.json`:
 }
 ```
 
-Then create `.claude/hooks/palantir-plan-reminder.json`:
-
-```json
-{
-  "hookSpecificOutput": {
-    "hookEventName": "PostToolUse",
-    "additionalContext": "MANDATORY: Before starting implementation, save the approved plan to Palantir. Invoke the palantir skill and follow the Plan Protocol. All atomized entries must use kind: machine-plan. Do NOT skip this step."
-  }
-}
-```
-
-**Why JSON with `additionalContext`?** Plain `echo` output from PostToolUse hooks
-goes to the debug log — the agent never sees it. The `additionalContext` field is
-what gets injected into the agent's conversation as a system reminder.
+The hook runs in the background (`asyncRewake`) and exits with code 2 to wake
+Claude with the instruction. Claude then spawns a background sonnet agent for plan
+saving while continuing with implementation.
 
 ## Changes from v1
 
 - **Unified skill**: 4 separate skills (`atomize-me`, `atomize-session`, `recall`,
   `task`) merged into one `palantir` skill with reference protocols
 - **MCP tools**: Uses `mcp__palantir-mcp__*` tools instead of curl/REST API calls
-- **Plan persistence**: New PostToolUse hook on `ExitPlanMode` replaces the
-  PreCompact hook
+- **Plan persistence**: Async PostToolUse hook on `ExitPlanMode` triggers a
+  background sonnet agent to save plans automatically (replaces the v1 PreCompact hook)
 - **New entry kinds**: Added `review` and `machine-plan`
 - **Tag management**: `list_tags` for reuse before creating entries
 - **Plans API**: `save_approved_plan` for structured plan storage
