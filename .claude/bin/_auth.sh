@@ -106,7 +106,6 @@ _palantir::do_curl() {
 	curl --fail-with-body --silent --show-error \
 		-H "Authorization: Bearer $token" \
 		-H "Content-Type: application/json" \
-		${PALANTIR_PROJECT_NAME:+-H "X-Palantir-Project: $PALANTIR_PROJECT_NAME"} \
 		-w "%{http_code}" \
 		-o "$tmp_body" \
 		"$@" >"$tmp_code" 2>&1

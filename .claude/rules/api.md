@@ -107,5 +107,4 @@ URL they need to click. Logout stays on the `ask` permission list because it rev
 
 ## Environment Variables
 - `PALANTIR_API_URL` — API base URL (required if not stored in credentials.json)
-- `PALANTIR_PROJECT_NAME` — scope requests to a specific project (optional; sent as `X-Palantir-Project` header)
 - `PALANTIR_CONFIG_DIR` — override default `~/.config/palantir`

@@ -31,7 +31,6 @@ Subcommands:
 
 Environment:
   PALANTIR_API_URL         API base URL (required if not in credentials.json)
-  PALANTIR_PROJECT_NAME    Scope requests to a specific project (optional)
   PALANTIR_CONFIG_DIR      Override default ~/.config/palantir
 EOF
 	exit "${1:-2}"

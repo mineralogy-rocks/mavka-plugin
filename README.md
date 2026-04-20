@@ -41,12 +41,6 @@ Set `PALANTIR_API_URL` in your shell profile to skip the prompt on each login:
 export PALANTIR_API_URL=http://palantir.local:81
 ```
 
-Optionally set a project scope:
-
-```bash
-export PALANTIR_PROJECT_NAME=my-project
-```
-
 ## What the plugin does
 
 The plugin acts as a middleware layer between the AI agent and Palantir. It enforces
