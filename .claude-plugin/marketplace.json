@@ -13,7 +13,7 @@
       "name": "palantir",
       "source": "./",
       "description": "Persistent knowledge system — stores decisions, findings, errors, and patterns with semantic search and enforced atomization across sessions",
-      "version": "2.0.2",
+      "version": "2.0.3",
       "author": {
         "name": "mineralogy.rocks",
         "url": "https://github.com/mineralogy-rocks"
