@@ -2,19 +2,25 @@
 
 Use this when storing knowledge — logging a finding, decision, error, pattern, note, or review.
 
-> **Required reading**: `../../rules/atomize.md` (atomization rules), `../../rules/api.md` (MCP tool reference)
+> **Required reading**: `../../rules/atomize.md` (atomization rules), `../../rules/api.md` (wrapper command reference)
 
 ## Step 1 — Preflight
 
 Run these two calls in parallel before any write:
 
-1. **Duplicate check**: `search_knowledge` with a query summarizing the content to store. If a
+1. **Duplicate check**: search with a query summarizing the content to store. If a
    near-duplicate exists (same topic, same conclusion), tell the user and ask whether to skip,
    update, or create anyway.
-2. **Tag inventory**: `list_tags` to get existing tags. Reuse these. Only invent a new tag when
-   no existing tag fits.
+   ```bash
+   "${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_search.sh" knowledge --query "..." --limit 5
+   ```
+2. **Tag inventory**: get existing tags and reuse them. Only invent a new tag when no existing
+   tag fits.
+   ```bash
+   "${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_tag.sh" list
+   ```
 
-See `../../rules/api.md` for full tool signatures.
+See `../../rules/api.md` for full wrapper signatures.
 
 ## Step 2 — Atomize
 
@@ -31,10 +37,27 @@ Never use `machine-plan` kind here — that kind is reserved for the Plan Protoc
 
 ## Step 3 — Submit
 
-- **Single atom**: Use `create_entry(content, bluf, kind, tags, task_id?)`.
-- **Multiple atoms**: Use `create_entries_bulk(entries)`. The server auto-assigns a shared
-  `group_id` for traceability. Each entry in the list needs: `content`, `bluf`, `kind`, `tags`,
-  and optionally `task_id`.
+- **Single atom**:
+  ```bash
+  "${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_entry.sh" create \
+    --bluf "N+1 query caused by missing select_related on category FK" \
+    --content "..." \
+    --kind finding \
+    --tag django --tag performance
+  ```
+- **Long content** (use `--stdin` to avoid argv length limits):
+  ```bash
+  cat <<'EOF' | "${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_entry.sh" create \
+    --bluf "Added select_related to IndicatorViewSet queryset" \
+    --stdin --kind decision --tag django-orm --tag api-design
+  Full context here...
+  EOF
+  ```
+- **Multiple atoms**: write a JSON file `{"entries":[{content,bluf,kind,tags},...]}` then:
+  ```bash
+  "${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_entry.sh" bulk --file /tmp/entries.json
+  ```
+  The server auto-assigns a shared `group_id` for traceability.
 
 ## Step 4 — Confirm
 

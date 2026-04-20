@@ -1,6 +1,6 @@
 {
   "name": "palantir",
-  "version": "2.0.2",
+  "version": "3.0.0",
   "description": "Persistent knowledge system for Claude Code — stores decisions, findings, errors, and patterns with semantic search and enforced atomization across sessions",
   "author": {
     "name": "SGEPT",

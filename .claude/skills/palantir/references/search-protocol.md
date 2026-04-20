@@ -3,7 +3,7 @@
 Use this when the user wants to recall past knowledge, find related context, or investigate
 how something was handled before.
 
-> **Required reading**: `../../rules/api.md` (MCP tool reference — search modes, parameters)
+> **Required reading**: `../../rules/api.md` (wrapper command reference — search modes, parameters)
 
 ## Step 1 — Search
 
@@ -13,20 +13,36 @@ Choose the search mode based on the query (see `../../rules/api.md` for details)
 - **`bluf`**: When looking for high-level summaries or scanning for a topic.
 - **`content`**: When looking for specific implementation details or code-level context.
 
-Use `search_knowledge(query, kind?, tags?, plan_id?, task_id?, search_mode, limit)`.
+```bash
+"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_search.sh" knowledge \
+  --query "N+1 query on indicators" --mode hybrid --limit 5
+```
 
 Also search tasks if the query might relate to tracked work:
-`search_tasks(query, status?, tags?, due_date_lte?, due_date_gte?, limit)`.
+
+```bash
+"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_search.sh" tasks --query "TAU migration" --limit 5
+```
 
 ## Step 2 — Follow links
 
-For results with a `group_id`, consider fetching siblings via
-`list_entries(group_id=...)` to get the full atomization batch.
+For results with a `group_id`, consider fetching siblings to get the full atomization batch:
 
-For results with `related_ids`, consider fetching those entries via `get_entry(id)` to discover
-connected knowledge.
+```bash
+"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_entry.sh" list --group-id <group_id>
+```
 
-For results with a `task_id`, fetch the task via `get_task(id)` to show the work context.
+For results with a `task_id`, fetch the task to show work context:
+
+```bash
+"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_task.sh" get <task_id>
+```
+
+For individual entries with related IDs, fetch them:
+
+```bash
+"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_entry.sh" get <id>
+```
 
 Limit link-following to avoid noise: max 2 group fetches, 3 related entry fetches, 3 task fetches.
 
@@ -45,7 +61,7 @@ Found N entries related to "query":
 |---|------|------|------|------|
 | #42 | decision | We chose Pinia over Vuex for state management | `nuxt`, `migration` | 2026-04-10 |
 | #38 | finding | N+1 query on indicators caused 2.3s response times | `django`, `performance` | 2026-04-08 |
-| #35 | error | OAuth flow fails when redirect URI has trailing slash | `auth`, `dpa-mcp` | 2026-04-05 |
+| #35 | error | OAuth flow fails when redirect URI has trailing slash | `auth`, `oauth` | 2026-04-05 |
 ```
 
 ### Tasks table (if any)

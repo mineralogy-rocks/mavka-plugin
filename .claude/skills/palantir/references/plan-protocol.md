@@ -3,12 +3,17 @@
 Use this when the user has approved a plan and wants to persist it. Plans are stored as a raw
 plan document plus atomized entries derived from it.
 
-> **Required reading**: `../../rules/atomize.md` (atomization rules), `../../rules/api.md` (MCP tool reference)
+> **Required reading**: `../../rules/atomize.md` (atomization rules), `../../rules/api.md` (wrapper command reference)
 
 ## Step 1 — Preflight
 
-Same as Write Protocol: search for duplicates (`search_knowledge`) and get the tag inventory
-(`list_tags`). Run both in parallel. See `../../rules/api.md` for tool signatures.
+Same as Write Protocol: search for duplicates and get the tag inventory. Run both in parallel.
+See `../../rules/api.md` for wrapper signatures.
+
+```bash
+"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_search.sh" knowledge --query "..." --limit 5
+"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_tag.sh" list
+```
 
 ## Step 2 — Atomize the plan
 
@@ -30,14 +35,23 @@ should understand it fully without seeing the rest of the plan.
 
 ## Step 3 — Submit
 
-Use `save_approved_plan(title, content, entries, tags?, dedupe_key?)`:
-- `title`: Concise plan title
-- `content`: The full raw plan text as approved
-- `entries`: The atomized entries list, each with `content`, `bluf`, `kind`, `tags`
-- `tags`: Plan-level tags
-- `dedupe_key`: Provide one when automation may retry (prevents duplicate plans)
+Write the atomized entries to a JSON file, then call `palantir_plan.sh save`:
 
-See `../../rules/api.md` for the full tool signature.
+```bash
+# entries.json: [{"content":"...","bluf":"...","kind":"machine-plan","tags":["bos","nuxt"]}]
+"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_plan.sh" save \
+  --title "Bos frontend migration from Nuxt 2 to Nuxt 3" \
+  --content "$(cat /path/to/approved-plan.md)" \
+  --entries-file /tmp/entries.json \
+  --tag bos --tag nuxt --tag migration \
+  --dedupe-key "bos-nuxt3-migration-2026"
+```
+
+- `--title`: Concise plan title
+- `--content`: The full raw plan text as approved
+- `--entries-file`: Path to JSON file with the atomized entries array
+- `--tag`: Plan-level tags (repeatable)
+- `--dedupe-key`: Provide one when automation may retry (prevents duplicate plans)
 
 ## Step 4 — Confirm
 

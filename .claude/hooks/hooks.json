@@ -6,7 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cat \"${CLAUDE_PLUGIN_ROOT}/.claude/hooks/palantir-plan-reminder.json\""
+            "command": "sleep 5 && echo 'Plan approved. Invoke the palantir skill to save it during a natural pause.' >&2 && exit 2",
+            "asyncRewake": true
           }
         ]
       }

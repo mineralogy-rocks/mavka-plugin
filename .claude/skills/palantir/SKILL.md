@@ -5,10 +5,13 @@ description: >-
   wants to store, search, recall, or manage knowledge in Palantir — including saving decisions,
   findings, errors, patterns, notes, plans, or tasks. Also invoke when the user says "remember
   this", "store this", "save to Palantir", "log this", "what do we know about", "recall",
-  "search Palantir", or wants to persist an approved plan. This skill enforces atomization —
-  breaking complex knowledge into discrete, standalone, individually-searchable entries — before
-  anything is written to Palantir. Use it even for simple single-entry writes, because it
-  ensures BLUF quality, correct kind classification, tag reuse, and duplicate prevention.
+  "search Palantir", or wants to persist an approved plan. Also invoke when the user wants to
+  log in or log out of Palantir, or when any wrapper prints `[PALANTIR_LOGIN_REQUIRED]` — the
+  skill owns the login lifecycle and runs `palantir_login.sh` on the user's behalf. This skill
+  enforces atomization — breaking complex knowledge into discrete, standalone, individually-
+  searchable entries — before anything is written to Palantir. Use it even for simple
+  single-entry writes, because it ensures BLUF quality, correct kind classification, tag reuse,
+  and duplicate prevention.
 ---
 
 # Palantir Middleware
@@ -31,13 +34,20 @@ Read these before proceeding — they contain the detailed steps for each operat
 | `references/plan-protocol.md` | Saving approved plans with atomized `machine-plan` entries |
 | `references/search-protocol.md` | Searching, recalling, and presenting past knowledge |
 | `references/task-protocol.md` | Creating, updating, and enriching tasks |
+| `references/auth-protocol.md` | Logging in and out — triggered on `[PALANTIR_LOGIN_REQUIRED]` or direct user intent |
 
 Supporting rules (always loaded in context via the plugin):
 
 | Rule file | What it provides |
 |-----------|-----------------|
 | `../../rules/atomize.md` | Detailed atomization rules shared across all protocols |
-| `../../rules/api.md` | Full MCP tool reference with parameters and return values |
+| `../../rules/api.md` | Wrapper command reference with flags and environment variables |
+
+## Transport
+
+All Palantir operations go through bash wrappers in `${CLAUDE_PLUGIN_DIR}/.claude/bin/`. 
+Always call `${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_tag.sh list` before creating entries to reuse existing tags. 
+Use `${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_entry.sh create --stdin` for long content to avoid argv length limits.
 
 ## Routing
 
@@ -49,8 +59,12 @@ Classify the user's intent, then **read the corresponding protocol file** before
 | Save an approved plan | **Plan Protocol** |
 | Search, recall, "what do we know about X" | **Search Protocol** |
 | Create/update/manage tasks | **Task Protocol** |
+| "log me in", "authenticate", or wrapper output contains `[PALANTIR_LOGIN_REQUIRED]` | **Auth Protocol** |
 
 If the intent is ambiguous, ask the user to clarify before proceeding.
+
+When another protocol's wrapper call fails with `[PALANTIR_LOGIN_REQUIRED]`, first run the
+**Auth Protocol** to restore the session, then retry the original call.
 
 ---
 

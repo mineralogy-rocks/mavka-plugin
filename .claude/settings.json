@@ -1,0 +1,15 @@
+{
+	"permissions": {
+		"allow": [
+			"Bash(${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_search.sh:*)",
+			"Bash(${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_entry.sh:*)",
+			"Bash(${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_plan.sh:*)",
+			"Bash(${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_task.sh:*)",
+			"Bash(${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_tag.sh:*)",
+			"Bash(${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_login.sh:*)"
+		],
+		"ask": [
+			"Bash(${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir_logout.sh:*)"
+		]
+	}
+}
