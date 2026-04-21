@@ -20,8 +20,8 @@ docker-compose up -d
 ```bash
 claude plugin install github:mineralogy-rocks/palantir-plugin
 export PALANTIR_API_URL=https://palantir.example.com
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" login
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" perms install
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" login
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" perms install
 ```
 
 That's it. Login registers an OAuth2 client, opens your browser for GitHub auth,
@@ -54,7 +54,7 @@ The plugin acts as a middleware layer between the AI agent and Palantir. It enfo
 individually-searchable entries — before anything is written. It also ensures
 duplicate checks, tag reuse, correct kind classification, and standalone BLUF summaries.
 
-All Palantir operations go through a single CLI at `${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir`
+All Palantir operations go through a single CLI at `${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir`
 that calls the REST API directly using a bearer token refreshed automatically on expiry. Any
 agent (Claude Code, Codex, Gemini, …) can invoke it with the same credentials.
 

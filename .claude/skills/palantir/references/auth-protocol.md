@@ -17,8 +17,8 @@ Run this protocol in any of these cases:
 
 Use, in order:
 
-1. `${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir` — set when the plugin is installed.
-2. If `CLAUDE_PLUGIN_DIR` is empty, ask the user for the plugin repo path and cache it for the
+1. `${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir` — set when the plugin is installed.
+2. If `CLAUDE_PLUGIN_ROOT` is empty, ask the user for the plugin repo path and cache it for the
    session, or try `$(git rev-parse --show-toplevel)/palantir-plugin/.claude/bin/palantir`
    when the user is working inside the mineralogy-rocks monorepo.
 
@@ -36,7 +36,7 @@ Invoke the CLI with the Bash tool and `run_in_background: true`. Example:
 
 ```bash
 PALANTIR_API_URL=http://palantir.local:81 \
-  "${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" login
+  "${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" login
 ```
 
 The script runs three phases:
@@ -78,7 +78,7 @@ If the user invoked Auth Protocol directly ("log me in"), stop here — the task
 
 ## Logout
 
-When the user asks to log out, run `${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir logout` in the
+When the user asks to log out, run `${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir logout` in the
 foreground (this subcommand is on the `ask` permission list, which is intentional — logout is
 destructive because it revokes tokens). Confirm once to the user after completion.
 

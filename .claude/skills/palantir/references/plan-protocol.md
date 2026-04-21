@@ -11,8 +11,8 @@ Same as Write Protocol: search for duplicates and get the tag inventory. Run bot
 See `../../rules/api.md` for wrapper signatures.
 
 ```bash
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" search knowledge --query "..." --limit 5
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" tag list
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" search knowledge --query "..." --limit 5
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" tag list
 ```
 
 ## Step 2 — Atomize the plan
@@ -39,7 +39,7 @@ Write the atomized entries to a JSON file, then call `palantir plan save`:
 
 ```bash
 # entries.json: [{"content":"...","bluf":"...","kind":"machine-plan","tags":["bos","nuxt"]}]
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" plan save \
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" plan save \
   --title "Bos frontend migration from Nuxt 2 to Nuxt 3" \
   --content "$(cat /path/to/approved-plan.md)" \
   --entries-file /tmp/entries.json \

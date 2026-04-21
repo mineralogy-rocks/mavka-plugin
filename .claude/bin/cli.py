@@ -524,12 +524,12 @@ def _plugin_bin_path() -> str:
 def _perms_patterns() -> tuple[list[str], list[str]]:
 	"""Return (allow, ask) matcher sets covering the three plausible invocation forms:
 
-	1. ${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir … — if matchers expand plugin vars
+	1. ${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir … — if matchers expand plugin vars
 	2. /abs/path/.claude/bin/palantir …            — concrete path for this machine
 	3. palantir …                                  — if .claude/bin/ is on PATH
 	"""
 	abs_bin = _plugin_bin_path()
-	var_bin = "${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir"
+	var_bin = "${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir"
 	bare_bin = "palantir"
 	allow: list[str] = []
 	for group in _PERMS_GROUPS:

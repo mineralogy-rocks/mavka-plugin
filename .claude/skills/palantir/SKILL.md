@@ -45,9 +45,9 @@ Supporting rules (always loaded in context via the plugin):
 
 ## Transport
 
-All Palantir operations go through a single CLI at `${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir`.
-Always call `${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir tag list` before creating entries to reuse existing tags.
-Use `${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir entry create --stdin` for long content to avoid argv length limits.
+All Palantir operations go through a single CLI at `${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir`.
+Always call `${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir tag list` before creating entries to reuse existing tags.
+Use `${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir entry create --stdin` for long content to avoid argv length limits.
 
 ## Routing
 

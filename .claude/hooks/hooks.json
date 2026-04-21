@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_DIR}/.claude/hooks/on_plan_approved.sh",
+            "command": "${CLAUDE_PLUGIN_ROOT}/.claude/hooks/on_plan_approved.sh",
             "async": true
           }
         ]

@@ -1,6 +1,6 @@
 # Palantir API Reference
 
-All Palantir operations go through a single CLI at `${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir`. Use
+All Palantir operations go through a single CLI at `${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir`. Use
 it exclusively — do not call the REST API directly with curl. Any agent (Claude Code, Codex,
 Gemini, etc.) can invoke the same CLI; credentials persist at `~/.config/palantir/credentials.json`
 so one login covers every agent on the same machine.
@@ -11,19 +11,19 @@ so one login covers every agent on the same machine.
 
 ```bash
 # Always call before creating entries to reuse existing tags
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" tag list [--q <prefix>] [--limit <n>]
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" tag create --name <name>
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" tag list [--q <prefix>] [--limit <n>]
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" tag create --name <name>
 ```
 
 ### Search
 
 ```bash
 # Semantic search across knowledge entries
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" search knowledge \
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" search knowledge \
   --query <q> [--kind <k>] [--tag <name>]... [--mode hybrid|content|bluf] [--limit <n>] [--raw]
 
 # Search tasks by title
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" search tasks \
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" search tasks \
   --query <q> [--status <s>] [--tag <name>]... [--due-lte <d>] [--due-gte <d>] [--limit <n>] [--raw]
 ```
 
@@ -31,21 +31,21 @@ so one login covers every agent on the same machine.
 
 ```bash
 # Create a single entry
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" entry create \
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" entry create \
   --bluf <text> --content <text> [--kind <k>] [--tag <name>]... [--task-id <id>]
 
 # Create with long content via stdin (avoids argv length limits)
-echo "..." | "${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" entry create \
+echo "..." | "${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" entry create \
   --bluf <text> --stdin [--kind <k>] [--tag <name>]...
 
 # Bulk create from JSON file: {"entries":[{content,bluf,kind,tags},...]}
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" entry bulk --file <path>
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" entry bulk --file <path>
 
 # Get a single entry by ID
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" entry get <id>
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" entry get <id>
 
 # List entries with optional filters
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" entry list \
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" entry list \
   [--kind <k>] [--tag <name>]... [--plan-id <id>] [--task-id <id>] [--limit <n>] [--offset <n>]
 ```
 
@@ -53,32 +53,32 @@ echo "..." | "${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" entry create \
 
 ```bash
 # Save an approved plan with atomized entries
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" plan save \
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" plan save \
   --title <t> --content <text> --entries-file <path> [--tag <name>]... [--dedupe-key <k>]
 
 # Get a plan by ID
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" plan get <id>
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" plan get <id>
 
 # List plans
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" plan list [--query <q>] [--tag <name>]... [--limit <n>]
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" plan list [--query <q>] [--tag <name>]... [--limit <n>]
 ```
 
 ### Tasks
 
 ```bash
 # Create a task
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" task create \
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" task create \
   --title <t> [--status <s>] [--tag <name>]... [--due-date <d>]
 
 # Get a task by ID
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" task get <id>
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" task get <id>
 
 # Update a task
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" task update <id> \
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" task update <id> \
   [--status <s>] [--title <t>] [--tag <name>]... [--due-date <d>]
 
 # List tasks
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" task list \
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" task list \
   [--status <s>] [--tag <name>]... [--due-lte <d>] [--due-gte <d>] [--limit <n>]
 ```
 
@@ -92,8 +92,8 @@ Logout stays on the `ask` permission list because it revokes tokens.
 
 ```bash
 # Invoked by the skill, not by the user:
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" login     # allowed — run by the Auth Protocol
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" logout    # asks — user confirms each time
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" login     # allowed — run by the Auth Protocol
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" logout    # asks — user confirms each time
 ```
 
 ### Permissions
@@ -104,15 +104,15 @@ and nested `.claude/settings.json` inside a plugin is not loaded). Users install
 explicitly via:
 
 ```bash
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" perms install              # writes ~/.claude/settings.json
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" perms install --scope project
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" perms install --dry-run
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" perms status
-"${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" perms uninstall
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" perms install              # writes ~/.claude/settings.json
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" perms install --scope project
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" perms install --dry-run
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" perms status
+"${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" perms uninstall
 ```
 
 The installer is idempotent — re-running adds nothing on second call. It writes three pattern
-variants per verb (`${CLAUDE_PLUGIN_DIR}/...`, absolute path, bare `palantir`) so the allowlist
+variants per verb (`${CLAUDE_PLUGIN_ROOT}/...`, absolute path, bare `palantir`) so the allowlist
 matches whichever form Claude Code's permission checker sees. `logout` stays on the `ask` list.
 
 ## Entry Kinds

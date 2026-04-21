@@ -12,12 +12,12 @@ Run these two calls in parallel before any write:
    near-duplicate exists (same topic, same conclusion), tell the user and ask whether to skip,
    update, or create anyway.
    ```bash
-   "${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" search knowledge --query "..." --limit 5
+   "${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" search knowledge --query "..." --limit 5
    ```
 2. **Tag inventory**: get existing tags and reuse them. Only invent a new tag when no existing
    tag fits.
    ```bash
-   "${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" tag list
+   "${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" tag list
    ```
 
 See `../../rules/api.md` for full wrapper signatures.
@@ -39,7 +39,7 @@ Never use `machine-plan` kind here — that kind is reserved for the Plan Protoc
 
 - **Single atom**:
   ```bash
-  "${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" entry create \
+  "${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" entry create \
     --bluf "N+1 query caused by missing select_related on category FK" \
     --content "..." \
     --kind finding \
@@ -47,7 +47,7 @@ Never use `machine-plan` kind here — that kind is reserved for the Plan Protoc
   ```
 - **Long content** (use `--stdin` to avoid argv length limits):
   ```bash
-  cat <<'EOF' | "${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" entry create \
+  cat <<'EOF' | "${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" entry create \
     --bluf "Added select_related to IndicatorViewSet queryset" \
     --stdin --kind decision --tag django-orm --tag api-design
   Full context here...
@@ -55,7 +55,7 @@ Never use `machine-plan` kind here — that kind is reserved for the Plan Protoc
   ```
 - **Multiple atoms**: write a JSON file `{"entries":[{content,bluf,kind,tags},...]}` then:
   ```bash
-  "${CLAUDE_PLUGIN_DIR}/.claude/bin/palantir" entry bulk --file /tmp/entries.json
+  "${CLAUDE_PLUGIN_ROOT}/.claude/bin/palantir" entry bulk --file /tmp/entries.json
   ```
   The server auto-assigns a shared `group_id` for traceability.
 
