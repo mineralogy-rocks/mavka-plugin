@@ -7,7 +7,7 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/.claude/hooks/on_plan_approved.sh",
-            "async": true
+            "timeout": 5
           }
         ]
       }

@@ -7,7 +7,7 @@ These rules apply to all sessions in projects connected to Palantir.
 | Component | Trigger | What it does |
 |-----------|---------|--------------|
 | **PreCompact hook** | Before context compression | Atomizes full session into discrete entries with BLUFs |
-| **PostToolUse hook** | After plan approval (ExitPlanMode) | Fires `async: true`; launches `claude -p` in the background to run the palantir skill's Plan Protocol on the approved plan. Emits OS notifications at start and finish (`osascript` on macOS, `notify-send` on Linux; disable with `PALANTIR_HOOK_NOTIFY=0`). Does not wake or block the parent session. |
+| **PostToolUse hook** | After plan approval (ExitPlanMode) | Writes the approved plan to a temp file and returns `hookSpecificOutput.additionalContext` JSON that instructs the main session's Claude to invoke the palantir skill's Plan Protocol against that file, atomize, and save via `plan save` with an idempotent `dedupe_key`. The hook itself does no LLM work and no subprocess spawning; it is pure plumbing. Progress is logged to `$TMPDIR/palantir-plan-hook.log`. |
 | **palantir skill** | Manual or auto-invoked | Middleware for all Palantir operations — enforces atomization |
 
 ## When to Act
@@ -19,7 +19,7 @@ Invoke the `palantir` skill whenever the user asks to store, log, or remember so
 Invoke the `palantir` skill when the user asks about previous work, past decisions, or how something was handled before.
 
 ### After plan approval
-The async PostToolUse hook on ExitPlanMode auto-saves the plan in the background via a headless `claude -p` sub-agent that runs the Plan Protocol. No action required from the parent session — keep implementing. If the user explicitly asks you to save the plan (or the hook logs a failure at `$TMPDIR/palantir-plan-hook.log`), invoke the palantir skill directly; using the same dedupe-key will upsert rather than duplicate the plan.
+The PostToolUse hook on ExitPlanMode injects a system reminder via `hookSpecificOutput.additionalContext` telling the main session's Claude to save the plan to Palantir as its next action. Claude reads the plan from the temp file the hook writes, invokes the palantir skill's Plan Protocol (proper atomization per `rules/atomize.md`), and saves via `plan save` with the supplied `dedupe_key` (so retries upsert rather than duplicate). No background subprocess, no subagent, no Anthropic Messages API call — the main session's Claude is the atomization brain. Hook trace: `$TMPDIR/palantir-plan-hook.log`.
 
 ### Task management
 Use the `palantir` skill's Task Protocol to create, update, or add context to tasks.
