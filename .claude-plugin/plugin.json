@@ -1,6 +1,6 @@
 {
   "name": "mavka",
-  "version": "3.1.6",
+  "version": "3.1.7",
   "description": "Persistent knowledge system for Claude Code — stores decisions, findings, errors, and patterns with semantic search and enforced atomization across sessions",
   "author": {
     "name": "SGEPT",
