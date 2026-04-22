@@ -1,9 +1,15 @@
 # Mavka API Reference
 
-All Mavka operations go through a single CLI at `${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka`. Use
+All Mavka operations go through a single CLI at `~/.claude/skills/mavka/.claude/bin/mavka`. Use
 it exclusively — do not call the REST API directly with curl. Any agent (Claude Code, Codex,
 Gemini, etc.) can invoke the same CLI; credentials persist at `~/.config/mavka/credentials.json`
 so one login covers every agent on the same machine.
+
+The path is a stable symlink maintained by the plugin's SessionStart hook
+(`on_session_start.sh`). It always points at the current plugin cache root, so a single
+`Bash(~/.claude/skills/mavka/.claude/bin/mavka:*)` allow rule in `~/.claude/settings.json`
+survives every plugin upgrade. Never call the CLI via `${CLAUDE_PLUGIN_ROOT}` — Claude Code's
+security gate prompts on any `${VAR}` expansion in a Bash command, regardless of allow rules.
 
 ## CLI Commands
 
@@ -11,19 +17,19 @@ so one login covers every agent on the same machine.
 
 ```bash
 # Always call before creating entries to reuse existing tags
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" tag list [--q <prefix>] [--limit <n>]
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" tag create --name <name>
+~/.claude/skills/mavka/.claude/bin/mavka tag list [--q <prefix>] [--limit <n>]
+~/.claude/skills/mavka/.claude/bin/mavka tag create --name <name>
 ```
 
 ### Search
 
 ```bash
 # Semantic search across knowledge entries
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" search knowledge \
+~/.claude/skills/mavka/.claude/bin/mavka search knowledge \
   --query <q> [--kind <k>] [--tag <name>]... [--mode hybrid|content|bluf] [--limit <n>] [--raw]
 
 # Search tasks by title
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" search tasks \
+~/.claude/skills/mavka/.claude/bin/mavka search tasks \
   --query <q> [--status <s>] [--tag <name>]... [--due-lte <d>] [--due-gte <d>] [--limit <n>] [--raw]
 ```
 
@@ -31,21 +37,21 @@ so one login covers every agent on the same machine.
 
 ```bash
 # Create a single entry
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" entry create \
+~/.claude/skills/mavka/.claude/bin/mavka entry create \
   --bluf <text> --content <text> [--kind <k>] [--tag <name>]... [--task-id <id>]
 
 # Create with long content via stdin (avoids argv length limits)
-echo "..." | "${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" entry create \
+echo "..." | ~/.claude/skills/mavka/.claude/bin/mavka entry create \
   --bluf <text> --stdin [--kind <k>] [--tag <name>]...
 
 # Bulk create from JSON file: {"entries":[{content,bluf,kind,tags},...]}
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" entry bulk --file <path>
+~/.claude/skills/mavka/.claude/bin/mavka entry bulk --file <path>
 
 # Get a single entry by ID
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" entry get <id>
+~/.claude/skills/mavka/.claude/bin/mavka entry get <id>
 
 # List entries with optional filters
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" entry list \
+~/.claude/skills/mavka/.claude/bin/mavka entry list \
   [--kind <k>] [--tag <name>]... [--plan-id <id>] [--task-id <id>] [--limit <n>] [--offset <n>]
 ```
 
@@ -53,32 +59,32 @@ echo "..." | "${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" entry create \
 
 ```bash
 # Save an approved plan with atomized entries
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" plan save \
+~/.claude/skills/mavka/.claude/bin/mavka plan save \
   --title <t> --content <text> --entries-file <path> [--tag <name>]... [--dedupe-key <k>]
 
 # Get a plan by ID
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" plan get <id>
+~/.claude/skills/mavka/.claude/bin/mavka plan get <id>
 
 # List plans
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" plan list [--query <q>] [--tag <name>]... [--limit <n>]
+~/.claude/skills/mavka/.claude/bin/mavka plan list [--query <q>] [--tag <name>]... [--limit <n>]
 ```
 
 ### Tasks
 
 ```bash
 # Create a task
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" task create \
+~/.claude/skills/mavka/.claude/bin/mavka task create \
   --title <t> [--status <s>] [--tag <name>]... [--due-date <d>]
 
 # Get a task by ID
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" task get <id>
+~/.claude/skills/mavka/.claude/bin/mavka task get <id>
 
 # Update a task
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" task update <id> \
+~/.claude/skills/mavka/.claude/bin/mavka task update <id> \
   [--status <s>] [--title <t>] [--tag <name>]... [--due-date <d>]
 
 # List tasks
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" task list \
+~/.claude/skills/mavka/.claude/bin/mavka task list \
   [--status <s>] [--tag <name>]... [--due-lte <d>] [--due-gte <d>] [--limit <n>]
 ```
 
@@ -92,28 +98,9 @@ Logout stays on the `ask` permission list because it revokes tokens.
 
 ```bash
 # Invoked by the skill, not by the user:
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" login     # allowed — run by the Auth Protocol
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" logout    # asks — user confirms each time
+~/.claude/skills/mavka/.claude/bin/mavka login     # allowed — run by the Auth Protocol
+~/.claude/skills/mavka/.claude/bin/mavka logout    # asks — user confirms each time
 ```
-
-### Permissions
-
-Claude Code plugins cannot ship a `permissions` block that gets merged into the user's settings
-(the plugin manifest only supports `agent` and `subagentStatusLine` at the root `settings.json`,
-and nested `.claude/settings.json` inside a plugin is not loaded). Users install permissions
-explicitly via:
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" perms install              # writes ~/.claude/settings.json
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" perms install --scope project
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" perms install --dry-run
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" perms status
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" perms uninstall
-```
-
-The installer is idempotent — re-running adds nothing on second call. It writes three pattern
-variants per verb (`${CLAUDE_PLUGIN_ROOT}/...`, absolute path, bare `mavka`) so the allowlist
-matches whichever form Claude Code's permission checker sees. `logout` stays on the `ask` list.
 
 ## Entry Kinds
 `decision` | `finding` | `error` | `pattern` | `note` | `review` | `machine-plan`
@@ -132,14 +119,14 @@ matches whichever form Claude Code's permission checker sees. `logout` stays on 
 
 ## Agent-agnostic invocation
 
-Other agents can call the same CLI directly without the launcher:
+Other agents can call the same CLI via the same stable path:
 
 ```bash
-python3 "${MAVKA_PLUGIN_DIR}/.claude/bin/cli.py" <group> <verb> [flags]
+~/.claude/skills/mavka/.claude/bin/mavka <group> <verb> [flags]
 ```
 
-Or, if `.claude/bin/` is on PATH:
+Or directly against the Python entrypoint if needed:
 
 ```bash
-mavka <group> <verb> [flags]
+python3 ~/.claude/skills/mavka/.claude/bin/cli.py <group> <verb> [flags]
 ```

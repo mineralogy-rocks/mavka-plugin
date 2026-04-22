@@ -45,9 +45,14 @@ Supporting rules (always loaded in context via the plugin):
 
 ## Transport
 
-All Mavka operations go through a single CLI at `${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka`.
-Always call `${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka tag list` before creating entries to reuse existing tags.
-Use `${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka entry create --stdin` for long content to avoid argv length limits.
+All Mavka operations go through a single CLI at `~/.claude/skills/mavka/.claude/bin/mavka`.
+Always call `~/.claude/skills/mavka/.claude/bin/mavka tag list` before creating entries to reuse existing tags.
+Use `~/.claude/skills/mavka/.claude/bin/mavka entry create --stdin` for long content to avoid argv length limits.
+
+The path is a stable symlink maintained by this plugin's SessionStart hook — it survives
+plugin upgrades, so one `Bash(~/.claude/skills/mavka/.claude/bin/mavka:*)` allow rule in
+`~/.claude/settings.json` covers every call. Never use `${CLAUDE_PLUGIN_ROOT}` in Bash commands:
+Claude Code's security gate prompts on any `${VAR}` expansion.
 
 ## Routing
 

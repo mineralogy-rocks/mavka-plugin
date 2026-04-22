@@ -15,25 +15,54 @@ cd mavka
 docker-compose up -d
 ```
 
-## Install + Login
+## Install
 
 ```bash
 claude plugin install github:mineralogy-rocks/mavka-plugin
 export MAVKA_API_URL=https://mavka.example.com
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" login
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" perms install
 ```
 
-That's it. Login registers an OAuth2 client, opens your browser for GitHub auth,
-and stores bearer + refresh tokens at `~/.config/mavka/credentials.json` (mode 600).
-Re-running login reuses the registered client — no duplicate client rows.
+On session start, the plugin maintains a stable symlink at `~/.claude/skills/mavka`
+pointing at the current plugin cache root. Skills and the CLI are always accessed via
+this stable path, so one allowlist rule in your user settings survives every plugin
+upgrade.
 
-`perms install` appends a managed allow/ask block to `~/.claude/settings.json` so
-Claude Code doesn't prompt on every CLI call. It's idempotent (safe to re-run) and
-scope-aware (`--scope project|local`). Run `perms status` to see what's installed
-and `perms uninstall` to remove it.
+### One-time user settings
 
-For local development/testing without installing:
+Add the following block to `~/.claude/settings.json` (merge with your existing
+`permissions` block if you already have one):
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(~/.claude/skills/mavka/.claude/bin/mavka:*)",
+      "Read(~/.claude/skills/mavka/.claude/**)"
+    ],
+    "ask": [
+      "Bash(~/.claude/skills/mavka/.claude/bin/mavka logout:*)"
+    ]
+  }
+}
+```
+
+- `Bash(...mavka:*)` — allows every Mavka CLI subcommand (entry, task, plan, search,
+  tag, login) without prompting.
+- `Read(...mavka/.claude/**)` — allows Claude to read the skill protocol and rule
+  files without prompting.
+- `Bash(...mavka logout:*)` — keeps `logout` on the `ask` list because it revokes
+  tokens.
+
+Restart your Claude Code session after editing settings so the new rules take effect.
+
+### Login
+
+Ask Claude "log me in to Mavka" (or run the CLI directly). The skill's Auth Protocol
+registers an OAuth2 client, opens your browser for GitHub auth, and stores bearer +
+refresh tokens at `~/.config/mavka/credentials.json` (mode 600). Re-running login
+reuses the registered client — no duplicate rows.
+
+### Local development
 
 ```bash
 claude --plugin-dir /path/to/mavka-plugin
@@ -54,13 +83,15 @@ The plugin acts as a middleware layer between the AI agent and Mavka. It enforce
 individually-searchable entries — before anything is written. It also ensures
 duplicate checks, tag reuse, correct kind classification, and standalone BLUF summaries.
 
-All Mavka operations go through a single CLI at `${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka`
-that calls the REST API directly using a bearer token refreshed automatically on expiry. Any
-agent (Claude Code, Codex, Gemini, …) can invoke it with the same credentials.
+All Mavka operations go through the single CLI at
+`~/.claude/skills/mavka/.claude/bin/mavka` — a stable path maintained by the
+SessionStart hook. It calls the REST API directly using a bearer token refreshed
+automatically on expiry. Any agent (Claude Code, Codex, Gemini, …) can invoke it with
+the same credentials.
 
-When a plan is approved in `/plan` mode, an async hook fires `claude -p` in the
-background to auto-save the plan via the mavka skill's Plan Protocol — the
-parent session is never interrupted and the plan lands in Mavka seconds later.
+When a plan is approved in `/plan` mode, the PostToolUse hook delegates the
+atomize-and-save to a `mavka-worker` background subagent, so the main session stays
+responsive and plan entries land in Mavka seconds later.
 
 ## Skill
 
@@ -76,12 +107,20 @@ The skill routes by intent:
 | Save an approved plan | Plan Protocol |
 | Search/recall ("what do we know about X") | Search Protocol |
 | Create/update tasks | Task Protocol |
+| Log in / log out | Auth Protocol |
 
-## Hook
+## Subagent
+
+| Agent | Description |
+|-------|-------------|
+| `mavka-worker` | Background worker that owns multi-step Mavka CLI work (plan saves, bulk writes, linked searches). The plan-approved hook delegates to it with `run_in_background=true` so the main session is never interrupted. |
+
+## Hooks
 
 | Event | Matcher | What it does |
 |-------|---------|-------------|
-| **PostToolUse** | `ExitPlanMode` | Fires `async: true`; runs `claude -p` in the background so a sub-agent invokes the mavka skill's Plan Protocol on the approved plan. Emits an OS notification at start and at completion (success or failure). No interruption to the parent session. Set `MAVKA_HOOK_NOTIFY=0` to silence notifications. |
+| **SessionStart** | — | Maintains the stable `~/.claude/skills/mavka` symlink pointing at the current plugin cache. Idempotent — no-op if the link is already correct. |
+| **PostToolUse** | `ExitPlanMode` | Writes the approved plan to a temp file and emits `additionalContext` telling the main session to spawn `Task(subagent_type=mavka-worker, run_in_background=true)` with the plan path. The worker handles atomization and `mavka plan save` in the background. |
 
 ## Plugin structure
 
@@ -98,23 +137,23 @@ The skill routes by intent:
       search-protocol.md               # Search and recall past knowledge
       task-protocol.md                 # Task lifecycle management
       auth-protocol.md                 # Login lifecycle (PKCE flow, token refresh, logout)
+  agents/
+    mavka-worker.md                    # Background worker for plan saves and bulk Mavka work
   hooks/
-    hooks.json                         # Async hook (PostToolUse on ExitPlanMode)
+    hooks.json                         # SessionStart symlink maintainer + PostToolUse plan handoff
+    on_session_start.sh                # Maintains ~/.claude/skills/mavka symlink
     on_plan_approved.sh                # Bash launcher — redirects output to log, execs Python
-    _plan_auto_save.py                 # Plumbing — extracts plan from payload, runs claude -p
+    _plan_auto_save.py                 # Plumbing — extracts plan, emits Task-delegation reminder
   rules/
     atomize.md                         # Shared atomization rules
     api.md                             # CLI command reference
     memory.md                          # When to use what
   bin/
-    mavka                           # Executable launcher (exec python3 cli.py "$@")
+    mavka                              # Executable launcher (exec python3 cli.py "$@")
     cli.py                             # Unified CLI — all subcommands live here
     _auth.py                           # Credentials, token refresh, authed HTTP
     _common.py                         # Output formatting and shared helpers
 ```
-
-Permissions live in the user's `~/.claude/settings.json`, not in the plugin — install via
-`mavka perms install`. See [Install + Login](#install--login).
 
 ## How it works
 
@@ -133,50 +172,21 @@ merged via Reciprocal Rank Fusion.
 **Tasks** group related entries and track work status
 (`planning` -> `ready` -> `wip` -> `review` -> `done`).
 
-## Manual hook setup (without the plugin)
+## Why the stable symlink
 
-The plugin already wires the ExitPlanMode hook on install. If you want plan
-auto-save without the full plugin, point your `.claude/settings.local.json` at
-a checkout of `on_plan_approved.sh`:
+Claude Code plugins install into a version-specific cache at
+`~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`. Using that concrete path
+in skill commands would break allowlist rules on every plugin upgrade, and using
+`${CLAUDE_PLUGIN_ROOT}` triggers Claude Code's "Contains expansion" security prompt on
+every call. Maintaining a stable symlink (`~/.claude/skills/mavka`) under the user's
+home directory gives us one path that:
 
-```json
-{
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "ExitPlanMode",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/abs/path/to/mavka-plugin/.claude/hooks/on_plan_approved.sh",
-            "async": true
-          }
-        ]
-      }
-    ]
-  }
-}
-```
+- Is identical in every skill invocation (no variable expansion → no security gate)
+- Survives plugin upgrades (the SessionStart hook relinks to the new cache)
+- Maps cleanly onto a single set of allowlist rules in user settings
 
-`async: true` runs the hook fire-and-forget — no wake-up, no interruption. The
-script reads the hook payload on stdin, extracts the approved plan, and launches
-`claude -p` in the background so a sub-agent runs the mavka skill's Plan
-Protocol. Logs at `$TMPDIR/mavka-plan-hook.log`.
-
-## Changes from v2
-
-- **Unified CLI**: Replaced the MCP server dependency (and, in v3.1, the seven per-domain bash
-  wrappers) with a single `mavka` CLI covering entry / task / plan / search / tag / login /
-  logout / perms. Any agent (Claude Code, Codex, Gemini, …) can invoke it directly.
-- **No MCP server**: Removed `mavka-mcp` container from the Mavka stack — one fewer
-  service, ~30x fewer tool-surface tokens.
-- **Auto token refresh**: `_auth.py` refreshes the bearer token on 401 transparently.
-- **Managed permission install**: `mavka perms install` writes the allow/ask block into
-  the user's `~/.claude/settings.json` (idempotent). Plugin-shipped `.claude/settings.json`
-  is not loaded by Claude Code, so the installer is the supported path.
-- **True background plan auto-save**: ExitPlanMode hook uses `async: true` + `claude -p` to
-  run the mavka skill's Plan Protocol in a headless sub-agent. Previous behavior
-  (`asyncRewake: true` + reminder) is replaced — parent session is never woken.
+This is the pattern used by [garrytan/gstack](https://github.com/garrytan/gstack) and
+[Ahacad/gstack](https://github.com/Ahacad/gstack).
 
 ## License
 

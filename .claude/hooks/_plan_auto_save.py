@@ -77,30 +77,47 @@ def _write_temp_plan(plan: str, sha12: str) -> str:
 
 
 def _instructions(temp_path: str, dedupe_key: str, title: str) -> str:
-	"""The system reminder injected into the main session's next turn."""
+	"""The system reminder injected into the main session's next turn.
+
+	Tells the main session to delegate the atomize-and-save to the `mavka-worker`
+	subagent in the background, so the user isn't watching dozens of CLI calls
+	scroll past while the main task is interrupted.
+	"""
+	worker_prompt = (
+		f"Save this approved plan to Mavka. "
+		f"Plan file: {temp_path}\n"
+		f"Title: {title!r}\n"
+		f"Required flags: --dedupe-key {dedupe_key} --tag auto-saved\n\n"
+		"Follow the Plan Protocol at "
+		"~/.claude/skills/mavka/.claude/skills/mavka/references/plan-protocol.md. "
+		"Atomize per ~/.claude/skills/mavka/.claude/rules/atomize.md (one topic per "
+		"entry, standalone BLUF, kind=machine-plan). Report one line with the plan ID "
+		"and entry count."
+	)
 	return (
 		"🧠 Mavka plan auto-save hook fired.\n"
 		"\n"
-		"A plan was just approved and must be saved to Mavka as your next "
-		"action — before continuing the user's main task. Do this now:\n"
+		"A plan was just approved. Delegate the save to the `mavka-worker` subagent "
+		"in the background so the user's main work isn't interrupted. Do this now, "
+		"before continuing the user's task:\n"
 		"\n"
-		f"1. Print exactly this line to the user: Saving approved plan to Mavka… (title: {title!r})\n"
-		f"2. Invoke the `mavka` skill and follow its Plan Protocol "
-		f"(`.claude/skills/mavka/references/plan-protocol.md`). Read the approved "
-		f"plan from this path: {temp_path}\n"
-		f"3. Atomize the plan into discrete entries per `.claude/rules/atomize.md` "
-		f"(one topic per entry, each with its own BLUF and kind). Do not save a "
-		f"single monolithic entry.\n"
-		f"4. Save via `mavka plan save` with these flags so the save is "
-		f"idempotent and tagged:\n"
-		f"   --dedupe-key {dedupe_key}\n"
-		f"   --tag auto-saved\n"
-		f"5. After the save, report one line to the user with the plan ID and "
-		f"entry count. Then resume whatever the user was doing.\n"
+		f"1. Print exactly this line to the user: Saving approved plan to Mavka in background… (title: {title!r})\n"
+		"2. Spawn a background worker with the Task tool:\n"
+		"     subagent_type=\"mavka-worker\"\n"
+		"     run_in_background=true\n"
+		f"     description=\"Save plan {title!r} to Mavka\"\n"
+		f"     prompt=<the multi-line prompt below>\n"
+		"3. Resume whatever the user was doing immediately — do NOT wait for the worker.\n"
+		"   The worker's result will surface in a later turn. If it fails, a system "
+		"   reminder will tell you.\n"
 		"\n"
-		"Do not ask the user for permission; the Mavka CLI is already on "
-		"their allowlist. Do not re-atomize if you have already saved this exact "
-		"dedupe_key in this session."
+		"Worker prompt to use verbatim:\n"
+		"```\n"
+		f"{worker_prompt}\n"
+		"```\n"
+		"\n"
+		f"Do not re-delegate if you have already saved dedupe_key {dedupe_key} in "
+		"this session."
 	)
 
 

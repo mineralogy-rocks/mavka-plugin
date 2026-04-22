@@ -13,16 +13,17 @@ Run this protocol in any of these cases:
 - Before starting a long Mavka task, if `~/.config/mavka/credentials.json` is missing.
 - The user says "log me out" — skip to [Logout](#logout).
 
-## Step 1 — Resolve the CLI path
+## Step 1 — Use the stable CLI path
 
-Use, in order:
+The plugin's SessionStart hook maintains `~/.claude/skills/mavka` as a symlink to the current
+plugin cache. Always invoke via this stable path:
 
-1. `${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka` — set when the plugin is installed.
-2. If `CLAUDE_PLUGIN_ROOT` is empty, ask the user for the plugin repo path and cache it for the
-   session, or try `$(git rev-parse --show-toplevel)/mavka-plugin/.claude/bin/mavka`
-   when the user is working inside the mineralogy-rocks monorepo.
+```
+~/.claude/skills/mavka/.claude/bin/mavka
+```
 
-Do NOT guess paths silently. If resolution fails, tell the user once and stop.
+If the symlink is missing (e.g. the user ran a stale session before the plugin upgraded),
+tell the user once to restart Claude Code and stop. Do NOT guess alternate paths.
 
 ## Step 2 — Run login in the background
 
@@ -33,7 +34,7 @@ override.
 Invoke the CLI with the Bash tool and `run_in_background: true`. Example:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka" login
+~/.claude/skills/mavka/.claude/bin/mavka login
 ```
 
 The script runs three phases:
@@ -75,7 +76,7 @@ If the user invoked Auth Protocol directly ("log me in"), stop here — the task
 
 ## Logout
 
-When the user asks to log out, run `${CLAUDE_PLUGIN_ROOT}/.claude/bin/mavka logout` in the
+When the user asks to log out, run `~/.claude/skills/mavka/.claude/bin/mavka logout` in the
 foreground (this subcommand is on the `ask` permission list, which is intentional — logout is
 destructive because it revokes tokens). Confirm once to the user after completion.
 
