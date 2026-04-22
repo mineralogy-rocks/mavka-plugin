@@ -27,17 +27,20 @@ pointing at the current plugin cache root. Skills and the CLI are always accesse
 this stable path, so one allowlist rule in your user settings survives every plugin
 upgrade.
 
-### One-time user settings
+### One-time settings
 
-Add the following block to `~/.claude/settings.json` (merge with your existing
-`permissions` block if you already have one):
+Add the following block to whichever Claude Code settings file you use —
+`~/.claude/settings.json` (user) or `<project>/.claude/settings.local.json` (project).
+Merge with your existing `permissions` block if you already have one. Replace
+`<your-home>` with your actual home directory (e.g. `/Users/alice`); tilde-shorthand
+works for `Bash` rules but `Read` rules need the absolute path.
 
 ```json
 {
   "permissions": {
     "allow": [
       "Bash(~/.claude/skills/mavka/.claude/bin/mavka:*)",
-      "Read(~/.claude/skills/mavka/.claude/**)"
+      "Read(//<your-home>/.claude/plugins/cache/mineralogy-rocks/mavka/**)"
     ],
     "ask": [
       "Bash(~/.claude/skills/mavka/.claude/bin/mavka logout:*)"
@@ -47,9 +50,15 @@ Add the following block to `~/.claude/settings.json` (merge with your existing
 ```
 
 - `Bash(...mavka:*)` — allows every Mavka CLI subcommand (entry, task, plan, search,
-  tag, login) without prompting.
-- `Read(...mavka/.claude/**)` — allows Claude to read the skill protocol and rule
-  files without prompting.
+  tag, login) without prompting. The stable symlink makes the literal command string
+  identical across plugin upgrades, so this one rule lives forever.
+- `Read(//<home>/.claude/plugins/cache/mineralogy-rocks/mavka/**)` — allows Claude
+  to read the skill protocol and rule files without prompting. The leading `//` is
+  Claude Code's canonical path format for Read rules. We match the plugin cache
+  directly because Claude Code's Read matcher resolves symlinks **before** pattern
+  matching — so a symlink-based rule (`Read(~/.claude/skills/mavka/**)`) never
+  matches. The `**` wildcard absorbs the version directory, so this rule survives
+  every plugin upgrade.
 - `Bash(...mavka logout:*)` — keeps `logout` on the `ask` list because it revokes
   tokens.
 

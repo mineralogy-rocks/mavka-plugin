@@ -17,7 +17,7 @@ Flow on every plan approval:
    the main session's Claude to invoke the mavka skill's Plan
    Protocol on the plan, atomize it, and save it with the supplied
    `dedupe_key` (so retries upsert cleanly).
-5. Log progress to `$TMPDIR/mavka-plan-hook.log` for diagnosis.
+5. Log progress to `/tmp/mavka-plan-hook.log` for diagnosis.
 
 The hook itself is synchronous, returns in <100ms, and never blocks
 Claude Code. All failure paths log and exit 0 so an error here can never
@@ -32,7 +32,13 @@ import os
 import sys
 from datetime import datetime, timezone
 
-_TMP = os.path.normpath(os.environ.get("TMPDIR", "/tmp"))
+# Use /tmp/ explicitly rather than $TMPDIR. On macOS, $TMPDIR resolves to a
+# per-user sandbox at /var/folders/<...>/T/ that is on no Claude Code allow
+# rule by default — the mavka-worker subagent tasked with saving the plan
+# cannot read files there. /tmp/ (→ /private/tmp/) is world-readable and
+# commonly allowed via Read(//tmp/**), so a plan file placed there crosses
+# the subagent boundary without a permission prompt.
+_TMP = "/tmp"
 LOG_PATH = os.path.join(_TMP, "mavka-plan-hook.log")
 
 
