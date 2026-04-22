@@ -95,8 +95,8 @@ def _instructions(temp_path: str, dedupe_key: str, title: str) -> str:
 		f"Title: {title!r}\n"
 		f"Required flags: --dedupe-key {dedupe_key} --tag auto-saved\n\n"
 		"Follow the Plan Protocol at "
-		"~/.claude/skills/mavka/.claude/skills/mavka/references/plan-protocol.md. "
-		"Atomize per ~/.claude/skills/mavka/.claude/rules/atomize.md (one topic per "
+		"~/.claude/skills/mavka/references/plan-protocol.md. "
+		"Atomize per ~/.claude/skills/mavka/rules/atomize.md (one topic per "
 		"entry, standalone BLUF, kind=machine-plan). Report one line with the plan ID "
 		"and entry count."
 	)

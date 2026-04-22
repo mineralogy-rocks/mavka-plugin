@@ -11,8 +11,8 @@ Same as Write Protocol: search for duplicates and get the tag inventory. Run bot
 See `../../rules/api.md` for wrapper signatures.
 
 ```bash
-~/.claude/skills/mavka/.claude/bin/mavka search knowledge --query "..." --limit 5
-~/.claude/skills/mavka/.claude/bin/mavka tag list
+~/.claude/skills/mavka/bin/mavka search knowledge --query "..." --limit 5
+~/.claude/skills/mavka/bin/mavka tag list
 ```
 
 ## Step 2 — Atomize the plan
@@ -39,7 +39,7 @@ Write the atomized entries to a JSON file, then call `mavka plan save`:
 
 ```bash
 # entries.json: [{"content":"...","bluf":"...","kind":"machine-plan","tags":["bos","nuxt"]}]
-~/.claude/skills/mavka/.claude/bin/mavka plan save \
+~/.claude/skills/mavka/bin/mavka plan save \
   --title "Bos frontend migration from Nuxt 2 to Nuxt 3" \
   --content "$(cat /path/to/approved-plan.md)" \
   --entries-file /tmp/entries.json \

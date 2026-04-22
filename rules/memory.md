@@ -6,9 +6,11 @@ These rules apply to all sessions in projects connected to Mavka.
 
 | Component | Trigger | What it does |
 |-----------|---------|--------------|
+| **`./setup` install symlink** | One-time, at install | Creates `~/.claude/skills/mavka` → `<repo>/skills/mavka` and `~/.claude/agents/mavka-worker.md` → `<repo>/agents/mavka-worker.md`. Static — survives every session with no per-session hook. Re-running `./setup` is idempotent. |
 | **PreCompact hook** | Before context compression | Atomizes full session into discrete entries with BLUFs |
-| **PostToolUse hook** | After plan approval (ExitPlanMode) | Writes the approved plan to a temp file and returns `hookSpecificOutput.additionalContext` JSON that instructs the main session's Claude to invoke the mavka skill's Plan Protocol against that file, atomize, and save via `plan save` with an idempotent `dedupe_key`. The hook itself does no LLM work and no subprocess spawning; it is pure plumbing. Progress is logged to `/tmp/mavka-plan-hook.log`. |
+| **PostToolUse hook** | After plan approval (ExitPlanMode) | Writes the approved plan to a temp file and returns `hookSpecificOutput.additionalContext` JSON that instructs the main session's Claude to delegate the save to the `mavka-worker` background subagent, which applies the Plan Protocol, atomizes, and calls `plan save` with an idempotent `dedupe_key`. The hook itself does no LLM work and no subprocess spawning; it is pure plumbing. Progress is logged to `/tmp/mavka-plan-hook.log`. |
 | **mavka skill** | Manual or auto-invoked | Middleware for all Mavka operations — enforces atomization |
+| **mavka-worker agent** | Spawned via Task(run_in_background=true) | User-level subagent with `permissionMode: bypassPermissions`. Owns Mavka CLI work (plan saves, bulk writes, linked searches) so the main session never stalls on tool-call fan-out. |
 
 ## When to Act
 

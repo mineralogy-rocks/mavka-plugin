@@ -8,11 +8,12 @@ description: >-
   worker does the atomization and saves. The mavka skill is preloaded into this
   worker's context at startup, so every protocol (Plan, Write, Search, Task, Auth)
   and the atomization rules are already in-context — the worker invokes the CLI
-  at `~/.claude/skills/mavka/.claude/bin/mavka` and never needs to Read protocol
+  at `~/.claude/skills/mavka/bin/mavka` and never needs to Read protocol
   files at runtime.
-tools: [Bash, Read]
-skills: [mavka:mavka]
+tools: [Bash, Read, Write]
+skills: [mavka]
 model: sonnet
+permissionMode: bypassPermissions
 ---
 
 # Mavka Worker
@@ -23,18 +24,17 @@ linked search fan-out). Run silently and report a one-line summary at the end.
 
 ## Preloaded skill
 
-The `mavka:mavka` skill is injected into your context at startup — SKILL.md plus every
+The `mavka` skill is injected into your context at startup — SKILL.md plus every
 protocol file (`references/{write,plan,search,task,auth}-protocol.md`) and the atomization
 rules (`rules/atomize.md`, `rules/api.md`) are already available. Do **not** try to Read
 those files; work from the in-context copy.
 
 ## CLI path
 
-Call the CLI via the stable symlink: `~/.claude/skills/mavka/.claude/bin/mavka`. The
-SessionStart hook keeps the symlink pointing at the current plugin cache, so one
-`Bash(~/.claude/skills/mavka/.claude/bin/mavka:*)` allow rule in user settings covers every
-invocation forever. Never use `${CLAUDE_PLUGIN_ROOT}` — it triggers Claude Code's
-variable-expansion prompt on every call.
+Call the CLI via the stable symlink: `~/.claude/skills/mavka/bin/mavka`. The `./setup`
+installer creates `~/.claude/skills/mavka` as a static symlink pointing at this repo, so one
+`Bash(~/.claude/skills/mavka/bin/mavka:*)` allow rule in user settings covers every
+invocation forever.
 
 ## What you do
 

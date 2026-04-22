@@ -1,15 +1,14 @@
 # Mavka API Reference
 
-All Mavka operations go through a single CLI at `~/.claude/skills/mavka/.claude/bin/mavka`. Use
+All Mavka operations go through a single CLI at `~/.claude/skills/mavka/bin/mavka`. Use
 it exclusively — do not call the REST API directly with curl. Any agent (Claude Code, Codex,
 Gemini, etc.) can invoke the same CLI; credentials persist at `~/.config/mavka/credentials.json`
 so one login covers every agent on the same machine.
 
-The path is a stable symlink maintained by the plugin's SessionStart hook
-(`on_session_start.sh`). It always points at the current plugin cache root, so a single
-`Bash(~/.claude/skills/mavka/.claude/bin/mavka:*)` allow rule in `~/.claude/settings.json`
-survives every plugin upgrade. Never call the CLI via `${CLAUDE_PLUGIN_ROOT}` — Claude Code's
-security gate prompts on any `${VAR}` expansion in a Bash command, regardless of allow rules.
+The path is a stable symlink created once by the repo's `./setup` installer — it points at
+`<repo>/skills/mavka` in this checkout. Because the symlink is static, a single
+`Bash(~/.claude/skills/mavka/bin/mavka:*)` allow rule in `~/.claude/settings.json` covers
+every invocation indefinitely; there is no per-session hook and no plugin cache to chase.
 
 ## CLI Commands
 
@@ -17,19 +16,19 @@ security gate prompts on any `${VAR}` expansion in a Bash command, regardless of
 
 ```bash
 # Always call before creating entries to reuse existing tags
-~/.claude/skills/mavka/.claude/bin/mavka tag list [--q <prefix>] [--limit <n>]
-~/.claude/skills/mavka/.claude/bin/mavka tag create --name <name>
+~/.claude/skills/mavka/bin/mavka tag list [--q <prefix>] [--limit <n>]
+~/.claude/skills/mavka/bin/mavka tag create --name <name>
 ```
 
 ### Search
 
 ```bash
 # Semantic search across knowledge entries
-~/.claude/skills/mavka/.claude/bin/mavka search knowledge \
+~/.claude/skills/mavka/bin/mavka search knowledge \
   --query <q> [--kind <k>] [--tag <name>]... [--mode hybrid|content|bluf] [--limit <n>] [--raw]
 
 # Search tasks by title
-~/.claude/skills/mavka/.claude/bin/mavka search tasks \
+~/.claude/skills/mavka/bin/mavka search tasks \
   --query <q> [--status <s>] [--tag <name>]... [--due-lte <d>] [--due-gte <d>] [--limit <n>] [--raw]
 ```
 
@@ -37,21 +36,21 @@ security gate prompts on any `${VAR}` expansion in a Bash command, regardless of
 
 ```bash
 # Create a single entry
-~/.claude/skills/mavka/.claude/bin/mavka entry create \
+~/.claude/skills/mavka/bin/mavka entry create \
   --bluf <text> --content <text> [--kind <k>] [--tag <name>]... [--task-id <id>]
 
 # Create with long content via stdin (avoids argv length limits)
-echo "..." | ~/.claude/skills/mavka/.claude/bin/mavka entry create \
+echo "..." | ~/.claude/skills/mavka/bin/mavka entry create \
   --bluf <text> --stdin [--kind <k>] [--tag <name>]...
 
 # Bulk create from JSON file: {"entries":[{content,bluf,kind,tags},...]}
-~/.claude/skills/mavka/.claude/bin/mavka entry bulk --file <path>
+~/.claude/skills/mavka/bin/mavka entry bulk --file <path>
 
 # Get a single entry by ID
-~/.claude/skills/mavka/.claude/bin/mavka entry get <id>
+~/.claude/skills/mavka/bin/mavka entry get <id>
 
 # List entries with optional filters
-~/.claude/skills/mavka/.claude/bin/mavka entry list \
+~/.claude/skills/mavka/bin/mavka entry list \
   [--kind <k>] [--tag <name>]... [--plan-id <id>] [--task-id <id>] [--limit <n>] [--offset <n>]
 ```
 
@@ -59,32 +58,32 @@ echo "..." | ~/.claude/skills/mavka/.claude/bin/mavka entry create \
 
 ```bash
 # Save an approved plan with atomized entries
-~/.claude/skills/mavka/.claude/bin/mavka plan save \
+~/.claude/skills/mavka/bin/mavka plan save \
   --title <t> --content <text> --entries-file <path> [--tag <name>]... [--dedupe-key <k>]
 
 # Get a plan by ID
-~/.claude/skills/mavka/.claude/bin/mavka plan get <id>
+~/.claude/skills/mavka/bin/mavka plan get <id>
 
 # List plans
-~/.claude/skills/mavka/.claude/bin/mavka plan list [--query <q>] [--tag <name>]... [--limit <n>]
+~/.claude/skills/mavka/bin/mavka plan list [--query <q>] [--tag <name>]... [--limit <n>]
 ```
 
 ### Tasks
 
 ```bash
 # Create a task
-~/.claude/skills/mavka/.claude/bin/mavka task create \
+~/.claude/skills/mavka/bin/mavka task create \
   --title <t> [--status <s>] [--tag <name>]... [--due-date <d>]
 
 # Get a task by ID
-~/.claude/skills/mavka/.claude/bin/mavka task get <id>
+~/.claude/skills/mavka/bin/mavka task get <id>
 
 # Update a task
-~/.claude/skills/mavka/.claude/bin/mavka task update <id> \
+~/.claude/skills/mavka/bin/mavka task update <id> \
   [--status <s>] [--title <t>] [--tag <name>]... [--due-date <d>]
 
 # List tasks
-~/.claude/skills/mavka/.claude/bin/mavka task list \
+~/.claude/skills/mavka/bin/mavka task list \
   [--status <s>] [--tag <name>]... [--due-lte <d>] [--due-gte <d>] [--limit <n>]
 ```
 
@@ -98,8 +97,8 @@ Logout stays on the `ask` permission list because it revokes tokens.
 
 ```bash
 # Invoked by the skill, not by the user:
-~/.claude/skills/mavka/.claude/bin/mavka login     # allowed — run by the Auth Protocol
-~/.claude/skills/mavka/.claude/bin/mavka logout    # asks — user confirms each time
+~/.claude/skills/mavka/bin/mavka login     # allowed — run by the Auth Protocol
+~/.claude/skills/mavka/bin/mavka logout    # asks — user confirms each time
 ```
 
 ## Entry Kinds
@@ -122,11 +121,11 @@ Logout stays on the `ask` permission list because it revokes tokens.
 Other agents can call the same CLI via the same stable path:
 
 ```bash
-~/.claude/skills/mavka/.claude/bin/mavka <group> <verb> [flags]
+~/.claude/skills/mavka/bin/mavka <group> <verb> [flags]
 ```
 
 Or directly against the Python entrypoint if needed:
 
 ```bash
-python3 ~/.claude/skills/mavka/.claude/bin/cli.py <group> <verb> [flags]
+python3 ~/.claude/skills/mavka/bin/cli.py <group> <verb> [flags]
 ```

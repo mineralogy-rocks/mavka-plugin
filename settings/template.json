@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(~/.claude/skills/mavka/bin/mavka:*)",
+      "Read(/${REPO}/**)",
+      "Read(//tmp/mavka-plan-*)",
+      "Read(//tmp/mavka-entries-*)",
+      "Write(//tmp/mavka-entries-*)"
+    ],
+    "ask": [
+      "Bash(~/.claude/skills/mavka/bin/mavka logout:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "ExitPlanMode",
+        "hooks": [
+          {"type": "command", "command": "${REPO}/hooks/on_plan_approved.sh", "timeout": 5}
+        ]
+      }
+    ]
+  }
+}

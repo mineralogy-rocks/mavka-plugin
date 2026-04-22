@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO=$(cd "$(dirname "$0")" && pwd -P)
+
+if ! command -v python3 >/dev/null 2>&1; then
+	echo "error: python3 not found on PATH" >&2
+	exit 1
+fi
+
+remove_if_ours() {
+	local link="$1"
+	if [ ! -e "$link" ] && [ ! -L "$link" ]; then
+		echo "skip: $link (not present)"
+		return 0
+	fi
+	if [ ! -L "$link" ]; then
+		echo "warn: $link is not a symlink; leaving untouched"
+		return 0
+	fi
+	local target
+	target=$(readlink "$link")
+	case "$target" in
+		"$REPO"|"$REPO"/*)
+			rm -f "$link"
+			echo "removed: $link"
+			;;
+		*)
+			echo "warn: $link points to $target (not this repo); leaving untouched"
+			;;
+	esac
+}
+
+remove_if_ours "$HOME/.claude/skills/mavka"
+remove_if_ours "$HOME/.claude/agents/mavka-worker.md"
+
+STRIP_OUTPUT=$(python3 "$REPO/setup.py" strip "$HOME/.claude/settings.json" --repo "$REPO")
+
+if [ "$STRIP_OUTPUT" = "no changes" ]; then
+	STRIP_COUNT=0
+else
+	STRIP_COUNT=$(printf '%s\n' "$STRIP_OUTPUT" | grep -c '^' || true)
+fi
+
+echo "Uninstalled Mavka:"
+echo "  stripped $STRIP_COUNT entries from $HOME/.claude/settings.json"

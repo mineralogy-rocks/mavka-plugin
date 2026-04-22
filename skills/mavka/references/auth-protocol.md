@@ -15,15 +15,15 @@ Run this protocol in any of these cases:
 
 ## Step 1 — Use the stable CLI path
 
-The plugin's SessionStart hook maintains `~/.claude/skills/mavka` as a symlink to the current
-plugin cache. Always invoke via this stable path:
+`~/.claude/skills/mavka` is a static symlink created once by the repo's `./setup` installer;
+it points at `<repo>/skills/mavka`. Always invoke the CLI via this stable path:
 
 ```
-~/.claude/skills/mavka/.claude/bin/mavka
+~/.claude/skills/mavka/bin/mavka
 ```
 
-If the symlink is missing (e.g. the user ran a stale session before the plugin upgraded),
-tell the user once to restart Claude Code and stop. Do NOT guess alternate paths.
+If the symlink is missing, the user never ran `./setup`. Tell them once to run `./setup`
+from the checkout, then stop. Do NOT guess alternate paths.
 
 ## Step 2 — Run login in the background
 
@@ -34,7 +34,7 @@ override.
 Invoke the CLI with the Bash tool and `run_in_background: true`. Example:
 
 ```bash
-~/.claude/skills/mavka/.claude/bin/mavka login
+~/.claude/skills/mavka/bin/mavka login
 ```
 
 The script runs three phases:
@@ -76,7 +76,7 @@ If the user invoked Auth Protocol directly ("log me in"), stop here — the task
 
 ## Logout
 
-When the user asks to log out, run `~/.claude/skills/mavka/.claude/bin/mavka logout` in the
+When the user asks to log out, run `~/.claude/skills/mavka/bin/mavka logout` in the
 foreground (this subcommand is on the `ask` permission list, which is intentional — logout is
 destructive because it revokes tokens). Confirm once to the user after completion.
 

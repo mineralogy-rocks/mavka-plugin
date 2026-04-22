@@ -36,7 +36,7 @@ Read these before proceeding — they contain the detailed steps for each operat
 | `references/task-protocol.md` | Creating, updating, and enriching tasks |
 | `references/auth-protocol.md` | Logging in and out — triggered on `[MAVKA_LOGIN_REQUIRED]` or direct user intent |
 
-Supporting rules (always loaded in context via the plugin):
+Supporting rules (shipped alongside this skill in the repo):
 
 | Rule file | What it provides |
 |-----------|-----------------|
@@ -45,14 +45,14 @@ Supporting rules (always loaded in context via the plugin):
 
 ## Transport
 
-All Mavka operations go through a single CLI at `~/.claude/skills/mavka/.claude/bin/mavka`.
-Always call `~/.claude/skills/mavka/.claude/bin/mavka tag list` before creating entries to reuse existing tags.
-Use `~/.claude/skills/mavka/.claude/bin/mavka entry create --stdin` for long content to avoid argv length limits.
+All Mavka operations go through a single CLI at `~/.claude/skills/mavka/bin/mavka`.
+Always call `~/.claude/skills/mavka/bin/mavka tag list` before creating entries to reuse existing tags.
+Use `~/.claude/skills/mavka/bin/mavka entry create --stdin` for long content to avoid argv length limits.
 
-The path is a stable symlink maintained by this plugin's SessionStart hook — it survives
-plugin upgrades, so one `Bash(~/.claude/skills/mavka/.claude/bin/mavka:*)` allow rule in
-`~/.claude/settings.json` covers every call. Never use `${CLAUDE_PLUGIN_ROOT}` in Bash commands:
-Claude Code's security gate prompts on any `${VAR}` expansion.
+The path is a stable symlink created once by the repo's `./setup` installer; it points at
+`<repo>/skills/mavka` in the checkout. Because the symlink is static, one
+`Bash(~/.claude/skills/mavka/bin/mavka:*)` allow rule in `~/.claude/settings.json` covers
+every call indefinitely — no per-session hook, no plugin cache indirection.
 
 ## Routing
 

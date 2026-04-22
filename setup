@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO=$(cd "$(dirname "$0")" && pwd -P)
+
+if ! command -v python3 >/dev/null 2>&1; then
+	echo "error: python3 not found on PATH" >&2
+	exit 1
+fi
+
+mkdir -p "$HOME/.claude/skills" "$HOME/.claude/agents"
+
+SKILL_LINK="$HOME/.claude/skills/mavka"
+AGENT_LINK="$HOME/.claude/agents/mavka-worker.md"
+
+ln -sfn "$REPO/skills/mavka" "$SKILL_LINK"
+ln -sfn "$REPO/agents/mavka-worker.md" "$AGENT_LINK"
+
+chmod +x \
+	"$REPO/setup" \
+	"$REPO/uninstall" \
+	"$REPO/skills/mavka/bin/mavka" \
+	"$REPO/hooks/on_plan_approved.sh" 2>/dev/null || true
+
+MERGE_OUTPUT=$(python3 "$REPO/setup.py" merge "$REPO/settings/template.json" "$HOME/.claude/settings.json" --repo "$REPO")
+
+if [ "$MERGE_OUTPUT" = "no changes" ]; then
+	MERGE_COUNT=0
+else
+	MERGE_COUNT=$(printf '%s\n' "$MERGE_OUTPUT" | grep -c '^' || true)
+fi
+
+echo "Installed Mavka:"
+echo "  skill:  $SKILL_LINK -> $REPO/skills/mavka"
+echo "  agent:  $AGENT_LINK -> $REPO/agents/mavka-worker.md"
+echo "  merged $MERGE_COUNT rules into $HOME/.claude/settings.json"
+echo "Done. Restart Claude Code for the new hook to take effect."

@@ -14,14 +14,14 @@ Choose the search mode based on the query (see `../../rules/api.md` for details)
 - **`content`**: When looking for specific implementation details or code-level context.
 
 ```bash
-~/.claude/skills/mavka/.claude/bin/mavka search knowledge \
+~/.claude/skills/mavka/bin/mavka search knowledge \
   --query "N+1 query on indicators" --mode hybrid --limit 5
 ```
 
 Also search tasks if the query might relate to tracked work:
 
 ```bash
-~/.claude/skills/mavka/.claude/bin/mavka search tasks --query "TAU migration" --limit 5
+~/.claude/skills/mavka/bin/mavka search tasks --query "TAU migration" --limit 5
 ```
 
 ## Step 2 — Follow links
@@ -29,19 +29,19 @@ Also search tasks if the query might relate to tracked work:
 For results with a `group_id`, consider fetching siblings to get the full atomization batch:
 
 ```bash
-~/.claude/skills/mavka/.claude/bin/mavka entry list --group-id <group_id>
+~/.claude/skills/mavka/bin/mavka entry list --group-id <group_id>
 ```
 
 For results with a `task_id`, fetch the task to show work context:
 
 ```bash
-~/.claude/skills/mavka/.claude/bin/mavka task get <task_id>
+~/.claude/skills/mavka/bin/mavka task get <task_id>
 ```
 
 For individual entries with related IDs, fetch them:
 
 ```bash
-~/.claude/skills/mavka/.claude/bin/mavka entry get <id>
+~/.claude/skills/mavka/bin/mavka entry get <id>
 ```
 
 Limit link-following to avoid noise: max 2 group fetches, 3 related entry fetches, 3 task fetches.
